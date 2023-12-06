@@ -9,14 +9,23 @@ pub fn brad_pratt() {
     let tokens = vec![
         Token::ID(String::from("a")),
         Token::OP_ASSIGN,
+        Token::OP_NOT,
         Token::LIT_I32(1),
         Token::OP_ADD,
         Token::LIT_I32(2),
-        Token::OP_ADD,
+        Token::OP_MUL,
+        Token::ID(String::from("b")),
+        Token::OP_EQUAL,
         Token::LIT_I32(3),
-
-        Token::OP_DIV,
+        Token::OP_ADD,
         Token::LIT_I32(4),
+        Token::OP_DIV,
+        Token::LIT_I32(5),
+        Token::OP_ADD,
+        Token::LIT_I32(6),
+        Token::OP_MUL,
+        Token::LIT_I32(7),
+
     ];
 
     // create Pratt parser
@@ -69,7 +78,15 @@ impl PrattParser {
             Token::LIT_I32(_) => {
                 ParseTree::new(token.clone())
             }
-            Token::EOI => { todo!() }
+            Token::OP_NOT => {
+                let mut node = ParseTree::new(token.clone());
+                let right_denotation = self.pratt_driver(token.right_bp());
+                node.push(right_denotation);
+                node
+            }
+            Token::EOI => {
+                ParseTree::new(token.clone())
+            }
             _ => {
                 panic!("Missing prefix function for token {:?}", token);
             }
@@ -78,7 +95,6 @@ impl PrattParser {
 
     fn func_infix(&mut self, token: Token, left_denotation : ParseTree) -> ParseTree {
         match token {
-            Token::LIT_I32(_) => { todo!() }
             Token::OP_ADD => {
                 let mut node = ParseTree::new(token.clone());
                 let right_denotation = self.pratt_driver(token.right_bp());
@@ -96,15 +112,22 @@ impl PrattParser {
             Token::OP_DIV => {
                 let mut node = ParseTree::new(token.clone());
                 let right_denotation = self.pratt_driver(token.right_bp());
-                node.push(right_denotation);
                 node.push(left_denotation);
+                node.push(right_denotation);
                 node
             }
             Token::OP_MUL => {
                 let mut node = ParseTree::new(token.clone());
                 let right_denotation = self.pratt_driver(token.right_bp());
-                node.push(right_denotation);
                 node.push(left_denotation);
+                node.push(right_denotation);
+                node
+            }
+            Token::OP_EQUAL => {
+                let mut node = ParseTree::new(token.clone());
+                let right_denotation = self.pratt_driver(token.right_bp());
+                node.push(left_denotation);
+                node.push(right_denotation);
                 node
             }
             Token::OP_ASSIGN => {
@@ -114,6 +137,35 @@ impl PrattParser {
                 node.push(right_denotation);
                 node
             }
+            Token::OP_AND_BIT => {
+                let mut node = ParseTree::new(token.clone());
+                let right_denotation = self.pratt_driver(token.right_bp());
+                node.push(left_denotation);
+                node.push(right_denotation);
+                node
+            }
+            Token::OP_OR_BIT => {
+                let mut node = ParseTree::new(token.clone());
+                let right_denotation = self.pratt_driver(token.right_bp());
+                node.push(left_denotation);
+                node.push(right_denotation);
+                node
+            }
+            Token::OP_GT => {
+                let mut node = ParseTree::new(token.clone());
+                let right_denotation = self.pratt_driver(token.right_bp());
+                node.push(left_denotation);
+                node.push(right_denotation);
+                node
+            }
+            Token::OP_LT => {
+                let mut node = ParseTree::new(token.clone());
+                let right_denotation = self.pratt_driver(token.right_bp());
+                node.push(left_denotation);
+                node.push(right_denotation);
+                node
+            }
+
             Token::EOI => { todo!() }
             _ => {
                 panic!("Missing infix function for token {:?}", token);
@@ -140,10 +192,18 @@ impl Token {
 
     fn binding_powers(token : &Token) -> (i32, i32) {
         match token {
-            Token::OP_DIV => (3,4),
-            Token::OP_MUL => (3,4),
-            Token::OP_SUB => (2,3),
-            Token::OP_ADD => (2,3),
+            Token::ID(_) => (14,14),
+            Token::LIT_I32(_) => (14,14),
+            Token::OP_DIV => (12,13),
+            Token::OP_MUL => (12,13),
+            Token::OP_SUB => (10,11),
+            Token::OP_ADD => (10,11),
+            Token::OP_LT => (8,9),
+            Token::OP_GT => (8,9),
+            Token::OP_AND_BIT => (6,7),
+            Token::OP_OR_BIT => (6,7),
+            Token::OP_EQUAL => (4,5),
+            Token::OP_NOT => (2,3),
             Token::OP_ASSIGN => (2,1),
             Token::EOI => (0,0),
             _ => {

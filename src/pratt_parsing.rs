@@ -6,6 +6,22 @@ pub fn brad_pratt() {
 
     // create a sequence of tokens that is assumed to
     //   be output of the lexer
+
+    // a = !1 + 2 * b == 3 + 4 / 5 & 6 * 7
+    // We get
+    //  = a
+    //      (&
+    //          (==
+    //              (+ (!1)
+    //                  (* 2 b)
+    //              )
+    //              (+ 3
+    //                  (/ 4 5)
+    //              )
+    //          )
+    //          (* 6 7)
+    //      )
+
     let tokens = vec![
         Token::ID(String::from("a")),
         Token::OP_ASSIGN,
@@ -21,7 +37,7 @@ pub fn brad_pratt() {
         Token::LIT_I32(4),
         Token::OP_DIV,
         Token::LIT_I32(5),
-        Token::OP_ADD,
+        Token::OP_AND_BIT,
         Token::LIT_I32(6),
         Token::OP_MUL,
         Token::LIT_I32(7),
@@ -192,18 +208,18 @@ impl Token {
 
     fn binding_powers(token : &Token) -> (i32, i32) {
         match token {
-            Token::ID(_) => (14,14),
-            Token::LIT_I32(_) => (14,14),
-            Token::OP_DIV => (12,13),
-            Token::OP_MUL => (12,13),
-            Token::OP_SUB => (10,11),
-            Token::OP_ADD => (10,11),
-            Token::OP_LT => (8,9),
-            Token::OP_GT => (8,9),
-            Token::OP_AND_BIT => (6,7),
-            Token::OP_OR_BIT => (6,7),
+            Token::OP_NOT => (13,14),
+            Token::ID(_) => (12,12),
+            Token::LIT_I32(_) => (12,12),
+            Token::OP_DIV => (10,11),
+            Token::OP_MUL => (10,11),
+            Token::OP_SUB => (8,9),
+            Token::OP_ADD => (8,9),
+            Token::OP_LT => (6,7),
+            Token::OP_GT => (6,7),
             Token::OP_EQUAL => (4,5),
-            Token::OP_NOT => (2,3),
+            Token::OP_AND_BIT => (2,3),
+            Token::OP_OR_BIT => (2,3),
             Token::OP_ASSIGN => (2,1),
             Token::EOI => (0,0),
             _ => {

@@ -7,6 +7,7 @@ pub fn brad_pratt() {
     // create a sequence of tokens that is assumed to
     //   be output of the lexer
 
+    //Example:
     // a = !1 + 2 * b == 3 + 4 / 5 & 6 * 7
     // We get
     //  = a

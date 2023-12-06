@@ -10,7 +10,10 @@ const INDENT : usize = 2;
 
 pub fn boolS() {
     let test2 =
-        "func factorial_recursion(n : i32) -> i32
+"let global;
+global = 5;
+
+func factorial_recursion(n : i32) -> i32
 {
     if n < 2 {
         return 1;
@@ -69,12 +72,18 @@ impl DescentParser {  // simple recursive descend parser
     pub fn analyze(&mut self) {
         self.indent = 0;
         while !self.peek(Token::EOI) {
-
-            self.parse_func();
+            if self.peek(Token::KW_FUNC) {
+                self.parse_func();
+            }
+            else if self.peek(Token::KW_LET) {
+                self.parse_let();
+            }
+            else if self.peek(Token::id()) {
+                self.parse_assignment();
+            }
         }
         self.expect(Token::EOI);
     }
-
 
     fn parse_func(&mut self) {
         /*
@@ -131,12 +140,12 @@ impl DescentParser {  // simple recursive descend parser
         if self.peek(Token::TYPE_I32) {
             self.expect(Token::TYPE_I32);
         }
-        else if self.peek(Token::TYPE_F32) {
-            self.expect(Token::TYPE_F32);
-        }
-        else if self.peek(Token::TYPE_CHAR) {
-            self.expect(Token::TYPE_CHAR);
-        }
+        // else if self.peek(Token::TYPE_F32) {
+        //     self.expect(Token::TYPE_F32);
+        // }
+        // else if self.peek(Token::TYPE_CHAR) {
+        //     self.expect(Token::TYPE_CHAR);
+        // }
         else if self.peek(Token::TYPE_BOOL) {
             self.expect(Token::TYPE_BOOL);
         }
@@ -147,19 +156,19 @@ impl DescentParser {  // simple recursive descend parser
 
     fn lit_check(&mut self) {
         if self.peek(Token::LIT_I32(0)) {
-            self.expect(Token::lit_i32());
+            self.parse_expression();
         }
-        else if self.peek(Token::LIT_F32(0.0)) {
-            self.expect(Token::lit_f32());
-        }
-        else if self.peek(Token::LIT_CHAR(' ')) {
-            self.expect(Token::lit_char());
-        }
+        // else if self.peek(Token::LIT_F32(0.0)) {
+        //     self.expect(Token::lit_f32());
+        // }
+        // else if self.peek(Token::LIT_CHAR(' ')) {
+        //     self.expect(Token::lit_char());
+        // }
         else if self.peek(Token::lit_string()) {
             self.expect(Token::lit_string());
         }
         else if self.peek(Token::lit_bool()) {
-            self.expect(Token::lit_bool());
+            self.parse_expression();
         }
         else {
             panic!("Did not expect '{:?}'!", self.curr());
@@ -181,6 +190,9 @@ impl DescentParser {  // simple recursive descend parser
         }
         else if self.peek(Token::KW_PRINT) {
             self.parse_print();
+        }
+        else if self.peek(Token::id()) {
+            self.parse_assignment();
         }
         else {
             panic!("Did not expect '{:?}'!", self.curr());
@@ -294,20 +306,17 @@ impl DescentParser {  // simple recursive descend parser
             self.expect(Token::KW_IF);
             if self.accept(Token::PAREN_L) {
                 if self.peek(Token::ID(String::new())) {
-                    self.expect(Token::id());
-                    //if (self.accept())
-                    //parse_expression();
+                    self.parse_expression();
                 }
                 else {
                     self.lit_check();
-                    //parse_expression();
                 }
                 self.expect(Token::PAREN_R);
             }
             else {
                 //TODO: NICE EXPRESSION
                 if self.peek(Token::ID(String::new())) {
-                    self.expect(Token::id());
+                    self.parse_expression();
                 }
                 else {
                     self.lit_check();
@@ -334,9 +343,8 @@ impl DescentParser {  // simple recursive descend parser
         {
             self.expect(Token::KW_RETURN);
             if !self.peek(Token::SEMICOLON) {
-                //TODO: NICE EXPRESSION
                 if self.peek(Token::ID(String::new())) {
-                    self.expect(Token::id());
+                    self.parse_expression();
                 }
                 else {
                     self.lit_check();
@@ -355,13 +363,13 @@ impl DescentParser {  // simple recursive descend parser
         self.indent_increment();
         {
             self.expect(Token::KW_WHILE);
-            //TODO: NICE EXPRESSION
             if self.accept(Token::PAREN_L) {
-                //TODO: NICE EXPRESSION
-                self.expect(Token::id());
+                self.parse_expression();
                 self.expect(Token::PAREN_R);
             }
-            self.expect(Token::id());
+            else {
+                self.parse_expression();
+            }
             self.parse_brace_nest();
         }
         self.indent_decrement();
@@ -375,18 +383,68 @@ impl DescentParser {  // simple recursive descend parser
         self.indent_increment();
         {
             self.expect(Token::KW_PRINT);
-            //TODO: NICE FUNCTIONCALLRETURNALS, INTS, BOOLS
-            self.lit_check();
+            self.parse_expression();
             self.expect(Token::SEMICOLON);
         }
         self.indent_decrement();
     }
 
-    fn parse_expressions(&mut self) {
+    fn parse_expression(&mut self) {
         /*
             Expressions ->
          */
+        self.indent_print("parse_expression()");
+        self.indent_increment();
 
+        let mut expression = vec![];
+        {
+            let mut last;
+            while self.peek(Token::lit_i32()) ||
+                self.peek(Token::id()) ||
+                self.peek(Token::lit_bool()) ||
+                self.peek(Token::OP_ADD) ||
+                self.peek(Token::OP_SUB) ||
+                self.peek(Token::OP_MUL) ||
+                self.peek(Token::OP_DIV) ||
+                self.peek(Token::OP_AND_BIT) ||
+                self.peek(Token::OP_OR_BIT) ||
+                self.peek(Token::OP_NOT) ||
+                self.peek(Token::OP_EQUAL) ||
+                self.peek(Token::OP_LT) ||
+                self.peek(Token::OP_GT) {
+
+                last = self.curr().clone();
+                self.advance();
+                if self.peek(Token::PAREN_L) {
+                    self.expect(Token::PAREN_L);
+                    if self.peek(Token::lit_i32()) ||
+                        self.peek(Token::id()) ||
+                        self.peek(Token::lit_bool()) {
+
+                        self.parse_expression();
+                    }
+                    self.expect(Token::PAREN_R);
+                }
+                expression.push(last);
+
+            }
+
+        }
+        println!("{:<indent$}{:?}", "", expression, indent=self.indent);
+        self.indent_decrement();
+
+    }
+
+    fn parse_assignment(&mut self) {
+        self.indent_print("parse_assignment()");
+        self.indent_increment();
+        {
+            self.expect(Token::id());
+            self.expect(Token::OP_ASSIGN);
+            self.parse_expression();
+            self.expect(Token::SEMICOLON);
+        }
+        self.indent_decrement();
     }
 }
 

@@ -95,6 +95,9 @@ impl PrattParser {
             Token::LIT_I32(_) => {
                 ParseTree::new(token.clone())
             }
+            Token::LIT_BOOL(_) => {
+                ParseTree::new(token.clone())
+            }
             Token::OP_NOT => {
                 let mut node = ParseTree::new(token.clone());
                 let right_denotation = self.pratt_driver(token.right_bp());
@@ -210,6 +213,7 @@ impl Token {
     fn binding_powers(token : &Token) -> (i32, i32) {
         match token {
             Token::OP_NOT => (13,14),
+            Token::LIT_BOOL(_) => (12,12),
             Token::ID(_) => (12,12),
             Token::LIT_I32(_) => (12,12),
             Token::OP_DIV => (10,11),

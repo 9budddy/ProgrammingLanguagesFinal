@@ -3,6 +3,7 @@
 
 use crate::lexer_mockup::Lexer;
 use crate::lexer::MyLexer;
+use crate::pratt_parsing::brad_pratt;
 use crate::token::Token;
 
 const INDENT : usize = 2;
@@ -13,7 +14,7 @@ pub fn boolS() {
 "let global;
 global = 5;
 
-func factorial_recursion(n : i32) -> i32
+func factorial_recursion(n)
 {
     if n < 2 {
         return 1;
@@ -21,7 +22,7 @@ func factorial_recursion(n : i32) -> i32
         return n;
     }
 }
-func factorial_loop(n : i32) -> i32
+func factorial_loop(n)
 {
     let p;
     p = n;
@@ -31,7 +32,7 @@ func factorial_loop(n : i32) -> i32
     }
     return p;
 }
-func main()
+func main(argc)
 {
     let n;
     n = 5;
@@ -389,7 +390,7 @@ impl DescentParser {  // simple recursive descend parser
         self.indent_decrement();
     }
 
-    fn parse_expression(&mut self) {
+    fn parse_expression(&mut self) -> Vec<Token> {
         /*
             Expressions ->
          */
@@ -417,22 +418,38 @@ impl DescentParser {  // simple recursive descend parser
                 self.advance();
                 if self.peek(Token::PAREN_L) {
                     self.expect(Token::PAREN_L);
+
+                    let mut tokens = vec![];
+
+                    //TODO: BEGIN - Expression =
                     if self.peek(Token::lit_i32()) ||
                         self.peek(Token::id()) ||
                         self.peek(Token::lit_bool()) {
 
-                        self.parse_expression();
+                        tokens = self.parse_expression();
                     }
+
+                    last = Token::CALLS(tokens.clone());
+                    expression.push(last.clone());
+
+                    while self.accept(Token::COMMA) {
+                        tokens = self.parse_expression();
+                        last = Token::CALLS(tokens.clone());
+                        expression.push(last.clone());
+                    }
+
+                    //TODO: END
                     self.expect(Token::PAREN_R);
+
+                } else {
+                    expression.push(last.clone());
                 }
-                expression.push(last);
-
             }
-
+            brad_pratt(expression.clone());
         }
-        println!("{:<indent$}{:?}", "", expression, indent=self.indent);
+        println!("{:<indent$}{:?}", "", expression.clone(), indent=self.indent);
         self.indent_decrement();
-
+        return expression.clone();
     }
 
     fn parse_assignment(&mut self) {

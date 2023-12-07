@@ -68,7 +68,10 @@ pub enum Token {
     KW_ELSE,
     KW_WHILE,
     KW_PRINT,
-    KW_RETURN
+    KW_RETURN,
+
+    // calls
+    CALLS(Vec<Token>),
 }
 
 

@@ -48,6 +48,15 @@ impl Frame {
         }
     }
 
+    pub fn assign_global(&mut self, name: &String, value: Value) {
+        match &self.global {
+            Some(rc_globals) => {
+                rc_globals.borrow_mut().values.insert(name.clone(), value);
+            }
+            _ => {}
+        }
+    }
+
     pub fn lookup_global(&self,  name: &String) -> Value {
         match &self.global {
             None => { Value::Nil }

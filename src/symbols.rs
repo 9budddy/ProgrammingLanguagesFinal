@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use crate::value::Value;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Symbol {
     pub name: String,
     pub value: Value,
@@ -16,7 +16,7 @@ impl Symbol {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Symbols {
     pub parent: Option<Rc<RefCell<Symbols>>>,
     pub map: HashMap<String, Symbol>,

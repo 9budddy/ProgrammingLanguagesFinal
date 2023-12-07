@@ -20,6 +20,11 @@ impl Evaluator {
             ExprNode::Val(value) => {
                 value.clone()
             }
+            ExprNode::LT(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::lt(value_a, value_b)
+            }
             ExprNode::Add(expr_a, expr_b) => {
                 let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
                 let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
@@ -45,9 +50,28 @@ impl Evaluator {
             }
         }
     }
+    fn lt(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Nil => { Value::Nil }
+            Value::Bool(_) => { Value::Nil }
 
+            Value::I32(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(_) => { Value::Nil }
+                    Value::I32(b) => { Value::Bool(a < b) }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+            Value::Null => { Value::Null }
+        }
+    }
     fn add(value_a: Value, value_b: Value) -> Value {
         match value_a {
+            Value::Null => { Value::Null }
             Value::Nil => { Value::Nil }
             Value::Bool(a) => {
                 match value_b {
@@ -59,6 +83,7 @@ impl Evaluator {
             }
             Value::I32(a) => {
                 match value_b {
+                    Value::Null => { Value::Null }
                     Value::Nil => { Value::Nil }
                     Value::Bool(b) => { Value::I32(a + if b {1} else {0}) }
                     Value::I32(b) => { Value::I32(a + b) }

@@ -75,13 +75,13 @@ impl Executor {
         let rc_locals = Rc::new(RefCell::new(locals));
         let return_value = Self::execute_block(rc_block, rc_locals);
 
-        return_value
+        return_value.1
     }
 
     fn execute_block(
         rc_block: Rc<BlockNode>,
         rc_locals: Rc<RefCell<Frame>>,
-    ) -> Value {
+    ) -> (bool, Value) {
         // get block node symbol table
         let rc_symbols = rc_block.symbols.clone();
         let symbols = rc_symbols.borrow();
@@ -99,11 +99,11 @@ impl Executor {
                 rc_locals.clone(),
             );
             if done {
-                return value;
+                return (true, value);
             }
         }
 
-        Value::Nil
+        (false, Value::Nil)
     }
 
     fn execute_statement(
@@ -112,15 +112,36 @@ impl Executor {
     ) -> (bool, Value)
     {
         match rc_statement.deref() {
-            StmtNode::Let(_) => {
-                println!("[debug] ignoring let statement");
+            StmtNode::If(ifs) => {
+                println!("[debug] executing if statement");
+                let value = Evaluator::evaluate(ifs.expr.clone(), rc_locals.clone());
+                if value == Value::Bool(true) {
+                    return Self::execute_block(ifs.then.clone(), rc_locals.clone());
+                }
+                else {
+                    return Self::execute_block(ifs.elses.clone(), rc_locals.clone());
+                }
+            }
+            StmtNode::Let(lets) => {
+                println!("[debug] executing let statement");
+                let name = &lets.name;
+                rc_locals.borrow_mut().assign(name, Value::Null);
                 (false, Value::Nil)
             }
             StmtNode::Assign(assign) => {
                 println!("[debug] executing assign statement");
                 let name = &assign.name;
                 let value = Evaluator::evaluate(assign.expr.clone(), rc_locals.clone());
-                rc_locals.borrow_mut().assign(name, value);
+                if rc_locals.borrow_mut().lookup(name) == Value::Null {
+                    rc_locals.borrow_mut().assign(name, value);
+                }
+                else if rc_locals.borrow_mut().lookup_global(name) == Value::Null {
+                    rc_locals.borrow_mut().assign_global(name, value);
+                }
+                else {
+                    panic!("Missing let declaration for variable {:?}", name);
+                }
+
                 (false, Value::Nil)
             }
             StmtNode::Return(ret) => {

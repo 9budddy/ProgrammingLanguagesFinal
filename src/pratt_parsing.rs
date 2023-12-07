@@ -2,7 +2,7 @@ use crate::token::Token;
 use crate::lexer_mockup::Lexer;
 use crate::parse_tree::ParseTree;
 
-pub fn brad_pratt() {
+pub fn brad_pratt(expression: Vec<Token>) {
 
     // create a sequence of tokens that is assumed to
     //   be output of the lexer
@@ -23,37 +23,37 @@ pub fn brad_pratt() {
     //          (* 6 7)
     //      )
 
-    let tokens = vec![
-        Token::ID(String::from("a")),
-        Token::OP_ASSIGN,
-        Token::OP_NOT,
-        Token::LIT_I32(1),
-        Token::OP_ADD,
-        Token::LIT_I32(2),
-        Token::OP_MUL,
-        Token::ID(String::from("b")),
-        Token::OP_EQUAL,
-        Token::LIT_I32(3),
-        Token::OP_ADD,
-        Token::LIT_I32(4),
-        Token::OP_DIV,
-        Token::LIT_I32(5),
-        Token::OP_AND_BIT,
-        Token::LIT_I32(6),
-        Token::OP_MUL,
-        Token::LIT_I32(7),
-
-    ];
+    // let tokens = vec![
+    //     Token::ID(String::from("a")),
+    //     Token::OP_ASSIGN,
+    //     Token::OP_NOT,
+    //     Token::LIT_I32(1),
+    //     Token::OP_ADD,
+    //     Token::LIT_I32(2),
+    //     Token::OP_MUL,
+    //     Token::ID(String::from("b")),
+    //     Token::OP_EQUAL,
+    //     Token::LIT_I32(3),
+    //     Token::OP_ADD,
+    //     Token::LIT_I32(4),
+    //     Token::OP_DIV,
+    //     Token::LIT_I32(5),
+    //     Token::OP_AND_BIT,
+    //     Token::LIT_I32(6),
+    //     Token::OP_MUL,
+    //     Token::LIT_I32(7),
+    //
+    // ];
 
     // create Pratt parser
-    let lexer = Lexer::new(tokens);
+    let lexer = Lexer::new(expression);
     let mut parser = PrattParser::new(lexer);
 
     // start Pratt top-down operator precedence parsing
     let tree = parser.analyze();
 
     // print parse tree
-    tree.print();
+    //tree.print();
 
 }
 
@@ -103,6 +103,9 @@ impl PrattParser {
                 let right_denotation = self.pratt_driver(token.right_bp());
                 node.push(right_denotation);
                 node
+            }
+            Token::CALLS(_) => {
+                ParseTree::new(token.clone())
             }
             Token::EOI => {
                 ParseTree::new(token.clone())
@@ -212,20 +215,21 @@ impl Token {
 
     fn binding_powers(token : &Token) -> (i32, i32) {
         match token {
-            Token::OP_NOT => (13,14),
-            Token::LIT_BOOL(_) => (12,12),
-            Token::ID(_) => (12,12),
-            Token::LIT_I32(_) => (12,12),
-            Token::OP_DIV => (10,11),
-            Token::OP_MUL => (10,11),
-            Token::OP_SUB => (8,9),
-            Token::OP_ADD => (8,9),
-            Token::OP_LT => (6,7),
-            Token::OP_GT => (6,7),
-            Token::OP_EQUAL => (4,5),
-            Token::OP_AND_BIT => (2,3),
-            Token::OP_OR_BIT => (2,3),
-            Token::OP_ASSIGN => (2,1),
+            Token::OP_NOT => (16,17),
+            Token::LIT_BOOL(_) => (15,15),
+            Token::ID(_) => (15,15),
+            Token::LIT_I32(_) => (15,15),
+            Token::OP_DIV => (13,14),
+            Token::OP_MUL => (13,14),
+            Token::OP_SUB => (11,12),
+            Token::OP_ADD => (11,12),
+            Token::OP_LT => (9,10),
+            Token::OP_GT => (9,10),
+            Token::OP_EQUAL => (7,8),
+            Token::OP_AND_BIT => (5,6),
+            Token::OP_OR_BIT => (5,6),
+            Token::OP_ASSIGN => (4,3),
+            Token::CALLS(_) => (1,1),
             Token::EOI => (0,0),
             _ => {
                 panic!("Missing binding powers for token {:?}", token);

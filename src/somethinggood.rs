@@ -6,6 +6,6 @@ pub fn runNeg1() {
     //Parser
     //Semantical Analysis
 
-    boolS();
+    //boolS();
     //brad_pratt();
 }

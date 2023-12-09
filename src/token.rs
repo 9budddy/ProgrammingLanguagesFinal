@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
+#![allow(unused_assignments)]
 
 use std::mem::discriminant;
 
@@ -71,7 +72,7 @@ pub enum Token {
     KW_RETURN,
 
     // calls
-    CALLS(Vec<Token>),
+    CALLS(String, Vec<Token>),
 }
 
 
@@ -102,6 +103,7 @@ impl Token {
     pub fn lit_bool() -> Token {
         Token::LIT_BOOL(false)
     }
+    pub fn calls() -> Token { Token::CALLS(" ".parse().unwrap(), vec![]) }
 }
 
 pub fn get_token(string: &str) -> Token {

@@ -1,3 +1,7 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -20,6 +24,30 @@ impl Evaluator {
             ExprNode::Val(value) => {
                 value.clone()
             }
+            ExprNode::Not(expr) =>{
+                let value_a = Self::evaluate(expr.clone(), rc_frame.clone());
+                Self::not(value_a)
+            }
+            ExprNode::EQUAL(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::equal(value_a, value_b)
+            }
+            ExprNode::AND_BIT(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::or_bit(value_a, value_b)
+            }
+            ExprNode::OR_BIT(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::or_bit(value_a, value_b)
+            }
+            ExprNode::GT(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::gt(value_a, value_b)
+            }
             ExprNode::LT(expr_a, expr_b) => {
                 let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
                 let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
@@ -29,6 +57,21 @@ impl Evaluator {
                 let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
                 let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
                 Self::add(value_a, value_b)
+            }
+            ExprNode::Sub(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::sub(value_a, value_b)
+            }
+            ExprNode::Mul(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::mul(value_a, value_b)
+            }
+            ExprNode::Div(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Self::div(value_a, value_b)
             }
             ExprNode::Call(name, rc_exprs) => {
                 println!("[debug] evaluating call '{name}'");
@@ -50,6 +93,102 @@ impl Evaluator {
             }
         }
     }
+    fn not(value_a: Value) -> Value {
+        match value_a {
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => { Value::Bool(!a) }
+            Value::I32(_) => { Value::Nil }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+            Value::Null => { Value::Null }
+        }
+    }
+    fn equal(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => {
+                match value_b {
+                Value::Nil => { Value::Nil }
+                Value::Bool(b) => { Value::Bool(a == b) }
+                Value::I32(_) => { Value::Nil }
+                Value::Null => { Value::Null }
+                _ => { Value::Nil }
+                }
+            }
+            Value::I32(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(_) => { Value::Nil }
+                    Value::I32(b) => { Value::Bool(a == b) }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+            Value::Null => { Value::Null }
+        }
+    }
+    fn and_bit(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::Bool(a & b) }
+                    Value::I32(_) => { Value::Nil }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::I32(_) => { Value::Nil }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+            Value::Null => { Value::Null }
+        }
+    }
+    fn or_bit(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::Bool(a | b) }
+                    Value::I32(_) => { Value::Nil }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::I32(_) => { Value::Nil }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+            Value::Null => { Value::Null }
+        }
+    }
+    fn gt(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Nil => { Value::Nil }
+            Value::Bool(_) => { Value::Nil }
+
+            Value::I32(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(_) => { Value::Nil }
+                    Value::I32(b) => { Value::Bool(a > b) }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+            Value::Null => { Value::Null }
+        }
+    }
     fn lt(value_a: Value, value_b: Value) -> Value {
         match value_a {
             Value::Nil => { Value::Nil }
@@ -60,6 +199,7 @@ impl Evaluator {
                     Value::Nil => { Value::Nil }
                     Value::Bool(_) => { Value::Nil }
                     Value::I32(b) => { Value::Bool(a < b) }
+                    Value::Null => { Value::Null }
                     _ => { Value::Nil }
                 }
             }
@@ -78,6 +218,7 @@ impl Evaluator {
                     Value::Nil => { Value::Nil }
                     Value::Bool(b) => { Value::I32(if a {1} else {0} + if b {1} else {0}) }
                     Value::I32(b) => { Value::I32(if a {1} else {0} + b) }
+                    Value::Null => { Value::Null }
                     _ => { Value::Nil }
                 }
             }
@@ -95,5 +236,85 @@ impl Evaluator {
             Value::Func(_, _) => { todo!() }
         }
     }
-
+    fn sub(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Null => { Value::Null }
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::I32(if a {1} else {0} - if b {1} else {0}) }
+                    Value::I32(b) => { Value::I32(if a {1} else {0} - b) }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::I32(a) => {
+                match value_b {
+                    Value::Null => { Value::Null }
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::I32(a - if b {1} else {0}) }
+                    Value::I32(b) => { Value::I32(a - b) }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+        }
+    }
+    fn mul(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Null => { Value::Null }
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::I32(if a {1} else {0} * if b {1} else {0}) }
+                    Value::I32(b) => { Value::I32(if a {1} else {0} * b) }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::I32(a) => {
+                match value_b {
+                    Value::Null => { Value::Null }
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::I32(a * if b {1} else {0}) }
+                    Value::I32(b) => { Value::I32(a * b) }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+        }
+    }
+    fn div(value_a: Value, value_b: Value) -> Value {
+        match value_a {
+            Value::Null => { Value::Null }
+            Value::Nil => { Value::Nil }
+            Value::Bool(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::I32(if a {1} else {0} / if b {1} else {0}) }
+                    Value::I32(b) => { Value::I32(if a {1} else {0} / b) }
+                    Value::Null => { Value::Null }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::I32(a) => {
+                match value_b {
+                    Value::Null => { Value::Null }
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::I32(a / if b {1} else {0}) }
+                    Value::I32(b) => { Value::I32(a / b) }
+                    _ => { Value::Nil }
+                }
+            }
+            Value::F32(_) => { todo!() }
+            Value::Chars(_) => { todo!() }
+            Value::Func(_, _) => { todo!() }
+        }
+    }
 }

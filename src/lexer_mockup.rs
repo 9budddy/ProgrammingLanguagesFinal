@@ -1,3 +1,7 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 use crate::token::Token;
 
 pub struct Lexer {

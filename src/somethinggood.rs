@@ -1,11 +1,21 @@
-use crate::parser::boolS;
-use crate::pratt_parsing::brad_pratt;
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
 
-pub fn runNeg1() {
+use std::rc::Rc;
+use crate::machine::Machine;
+use crate::parser::boolS;
+
+pub fn runNeg1(argc: Vec<String>) {
     //Lexer
     //Parser
     //Semantical Analysis
 
-    //boolS();
-    //brad_pratt();
+    let prog = boolS(argc.clone());
+
+    if argc.contains(&"e".to_string()) {
+        let runtime = Machine::new(Rc::new(prog));
+        runtime.run();
+    }
+
 }

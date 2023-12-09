@@ -1,3 +1,8 @@
+#![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 use std::cell::RefCell;
 use std::rc::Rc;
 use crate::symbols::Symbols;
@@ -77,6 +82,7 @@ pub enum StmtNode {
     Assign(AssignNode),
     Return(ReturnNode),
     Print(PrintNode),
+    While(WhileNode),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -94,6 +100,35 @@ impl IfNode {
             elses: Rc::new(elses),
         }
     }
+    pub fn newR(expr: Rc<ExprNode>, then: Rc<BlockNode>, elses: Rc<BlockNode>) -> IfNode {
+        IfNode {
+            expr,
+            then,
+            elses,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct WhileNode {
+    pub expr: Rc<ExprNode>,
+    pub then: Rc<BlockNode>,
+}
+
+impl WhileNode {
+    pub fn new(expr: ExprNode, then: BlockNode) -> WhileNode {
+        WhileNode {
+            expr: Rc::new(expr),
+            then: Rc::new(then),
+        }
+    }
+    pub fn newR(expr: Rc<ExprNode>, then: Rc<BlockNode>) -> WhileNode {
+        WhileNode {
+            expr,
+            then,
+        }
+    }
+
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -154,8 +189,16 @@ impl ReturnNode {
 pub enum ExprNode {
     Var(String),
     Val(Value),
+    Not(Rc<ExprNode>),
+    EQUAL(Rc<ExprNode>, Rc<ExprNode>),
+    OR_BIT(Rc<ExprNode>, Rc<ExprNode>),
+    AND_BIT(Rc<ExprNode>, Rc<ExprNode>),
     LT(Rc<ExprNode>, Rc<ExprNode>),
+    GT(Rc<ExprNode>, Rc<ExprNode>),
     Add(Rc<ExprNode>, Rc<ExprNode>),
+    Sub(Rc<ExprNode>, Rc<ExprNode>),
+    Mul(Rc<ExprNode>, Rc<ExprNode>),
+    Div(Rc<ExprNode>, Rc<ExprNode>),
     Call(String, Vec<Rc<ExprNode>>),
 }
 

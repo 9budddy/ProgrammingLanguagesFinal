@@ -1,10 +1,12 @@
 #![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
 
+use std::env;
 use std::rc::Rc;
 use crate::machine::Machine;
 use crate::somethinggood::runNeg1;
-use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, IfNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode};
-use crate::tree::ExprNode::Var;
+use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, IfNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
 use crate::value::Value;
 
 mod tree;
@@ -47,7 +49,7 @@ func main(argc) [
 /*
 let global;
 
-func factorial_recursion(n)
+func factorial_recursion(n, q, z)
 {
     if n < 2 {
         return 1;
@@ -70,7 +72,7 @@ func main(argc)
     let n;
     n = 5;
     print factorial_loop(n);
-    print factorial_recursion(n);
+    print factorial_recursion(n, false, 1);
 }
 
  */
@@ -79,18 +81,23 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
 
     let mut program = ProgramNode::new();
 
-    //globals
+    //GLOBALS
     let let_global = LetNode::new("global".to_string());
     program.let_nodes.push(Rc::new(let_global));
 
-    // factorial_recursion function
+
+
+
+    // FACTORIAL_RECURSION function
     let mut parameters_factorial_recursion = vec![];
     parameters_factorial_recursion.push(Parameter::new("n".to_string()));
+    parameters_factorial_recursion.push(Parameter::new("q".to_string()));
+    parameters_factorial_recursion.push(Parameter::new("z".to_string()));
 
     let mut block_factorial_recursion = BlockNode::new();
 
 
-    //--------HEY this de If
+    //--------HEY this de IF
     let express_if1 = ExprNode::LT(
         Rc::new(ExprNode::Var("n".to_string())),
         Rc::new(ExprNode::Val(Value::I32(2))),
@@ -126,6 +133,56 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
 
 
 
+    //FACTORIAL_LOOP
+    let mut parameters_factorial_loop = vec![];
+    parameters_factorial_loop.push(Parameter::new("n".to_string()));
+
+    let mut block_factorial_loop = BlockNode::new();
+    let stmtFacLoop1 = StmtNode::Let(LetNode::new("p".to_string()));
+    let stmtFacLoop2 = StmtNode::Assign(AssignNode::new("p".to_string(), ExprNode::Var("n".to_string())));
+
+    let express_FacLoop = ExprNode::GT(
+        Rc::new(ExprNode::Var("n".to_string())),
+        Rc::new(ExprNode::Val(Value::I32(0))),
+    );
+    let mut block_FacLoop_then = BlockNode::new();
+
+    let stmt_FacLoop_then1 = StmtNode::Assign(
+        AssignNode::new("n".to_string(), ExprNode::Sub(
+            Rc::new(ExprNode::Var("n".to_string())),
+            Rc::new(ExprNode::Val(Value::I32(1))),
+    )));
+    let stmt_FacLoop_then2 = StmtNode::Assign(
+        AssignNode::new("p".to_string(), ExprNode::Mul(
+            Rc::new(ExprNode::Var("p".to_string())),
+            Rc::new(ExprNode::Var("n".to_string())),
+        ))
+    );
+    block_FacLoop_then.statements.push(Rc::new(stmt_FacLoop_then1));
+    block_FacLoop_then.statements.push(Rc::new(stmt_FacLoop_then2));
+
+
+    let stmtFacLoop3 = StmtNode::While(WhileNode::new(
+        express_FacLoop,
+        block_FacLoop_then,
+    ));
+
+    let stmtFacLoop5 = StmtNode::Return(ReturnNode::new(ExprNode::Var("p".to_string())));
+
+    block_factorial_loop.statements.push(Rc::new(stmtFacLoop1));
+    block_factorial_loop.statements.push(Rc::new(stmtFacLoop2));
+    block_factorial_loop.statements.push(Rc::new(stmtFacLoop3));
+    block_factorial_loop.statements.push(Rc::new(stmtFacLoop5));
+
+    let func_FacLoop = FuncNode::new(
+        "factorial_loop".to_string(),
+        parameters_factorial_loop,
+        block_factorial_loop);
+
+    program.func_nodes.push(Rc::new(func_FacLoop));
+
+
+
     //MAIN PROGRAM
     let mut parameters_main : Vec<Parameter> = vec![];
     parameters_main.push(Parameter::new("argc".to_string()));
@@ -137,15 +194,22 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
 
     let stmtMain3 = StmtNode::Print(PrintNode::new(
     ExprNode::Call("factorial_recursion".to_string(), vec![
-            Rc::new(ExprNode::Var("n".to_string()))
+            Rc::new(ExprNode::Var("n".to_string())),
+            Rc::new(ExprNode::Val(Value::Bool(false))),
+            Rc::new(ExprNode::Val(Value::I32(1))),
         ])
     ));
 
+    let stmtMain4 = StmtNode::Print(PrintNode::new(
+        ExprNode::Call("factorial_loop".to_string(), vec![
+            Rc::new(ExprNode::Var("n".to_string())),
+        ])
+    ));
 
     block_main.statements.push(Rc::new(stmtMain1));
     block_main.statements.push(Rc::new(stmtMain2));
     block_main.statements.push(Rc::new(stmtMain3));
-
+    block_main.statements.push(Rc::new(stmtMain4));
 
     let func_main = FuncNode::new(
         "main".to_string(),
@@ -237,7 +301,8 @@ fn run0() {
 
 
 fn main() {
+    let argc: Vec<String> = env::args().collect();
 
-    //runNeg1();
-    run0();
+    runNeg1(argc.clone());
+    //run0();
 }

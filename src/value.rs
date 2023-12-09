@@ -1,7 +1,10 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 use std::rc::Rc;
 use crate::tree::{FuncNode};
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Null,

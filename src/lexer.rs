@@ -1,3 +1,7 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 extern crate exitcode;
 
 use crate::token::Token;
@@ -56,7 +60,7 @@ impl MyLexer {
 
     fn advance(&mut self) {
         // Create hardcoded keywords to check.
-        let keywords: HashSet<&str> = HashSet::from(["func", "let", "if", "else", "while", "print", "i32", "f32", "char", "return", "bool"]);
+        let keywords: HashSet<&str> = HashSet::from(["func", "let", "if", "else", "while", "print", "i32", "f32", "char", "return", "bool", "false", "true"]);
 
         if self.input_current_token == Token::EOI {
             println!();
@@ -80,9 +84,15 @@ impl MyLexer {
                         //Keyword | ID
                         for keyword in keywords.clone() {
                             if self.buffer_string == keyword {
-                                self.input_current_token = get_token(&self.buffer_string);
-                                run = true;
-                                break;
+                                if self.buffer_string == "false" || self.buffer_string == "true" {
+                                    self.input_current_token = Token::LIT_BOOL(self.buffer_string.parse::<bool>().unwrap());
+                                    run = true;
+                                    break;
+                                } else {
+                                    self.input_current_token = get_token(&self.buffer_string);
+                                    run = true;
+                                    break;
+                                }
                             }
                         }
                         if run != true {
@@ -194,9 +204,15 @@ impl MyLexer {
                             if !char.is_alphanumeric() && char != '_' {
                                 for keyword in keywords.clone() {
                                     if self.buffer_string == keyword {
-                                        self.input_current_token = get_token(&self.buffer_string);
-                                        run = true;
-                                        break;
+                                        if self.buffer_string == "false" || self.buffer_string == "true" {
+                                            self.input_current_token = Token::LIT_BOOL(self.buffer_string.parse::<bool>().unwrap());
+                                            run = true;
+                                            break;
+                                        } else {
+                                            self.input_current_token = get_token(&self.buffer_string);
+                                            run = true;
+                                            break;
+                                        }
                                     }
                                 }
                                 if run != true {

@@ -1,8 +1,12 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 use crate::token::Token;
 use crate::lexer_mockup::Lexer;
 use crate::parse_tree::ParseTree;
 
-pub fn brad_pratt(expression: Vec<Token>) {
+pub fn brad_pratt(expression: Vec<Token>) -> ParseTree {
 
     // create a sequence of tokens that is assumed to
     //   be output of the lexer
@@ -53,7 +57,7 @@ pub fn brad_pratt(expression: Vec<Token>) {
     let tree = parser.analyze();
 
     // print parse tree
-    //tree.print();
+    tree
 
 }
 
@@ -104,7 +108,7 @@ impl PrattParser {
                 node.push(right_denotation);
                 node
             }
-            Token::CALLS(_) => {
+            Token::CALLS(_, _) => {
                 ParseTree::new(token.clone())
             }
             Token::EOI => {
@@ -229,7 +233,7 @@ impl Token {
             Token::OP_AND_BIT => (5,6),
             Token::OP_OR_BIT => (5,6),
             Token::OP_ASSIGN => (4,3),
-            Token::CALLS(_) => (1,1),
+            Token::CALLS(_,_) => (1,1),
             Token::EOI => (0,0),
             _ => {
                 panic!("Missing binding powers for token {:?}", token);

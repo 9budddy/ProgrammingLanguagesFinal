@@ -1,3 +1,7 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+
 use std::rc::Rc;
 use crate::analyzer::Analyzer;
 use crate::executor::Executor;

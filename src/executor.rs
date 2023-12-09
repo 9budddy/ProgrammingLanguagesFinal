@@ -1,3 +1,9 @@
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_mut)]
+
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -84,7 +90,7 @@ impl Executor {
     ) -> (bool, Value) {
         // get block node symbol table
         let rc_symbols = rc_block.symbols.clone();
-        let symbols = rc_symbols.borrow();
+        let symbols = rc_symbols.borrow_mut();
 
         // initialize local frame
         rc_locals.borrow_mut().init_symbols(&symbols);
@@ -115,12 +121,24 @@ impl Executor {
             StmtNode::If(ifs) => {
                 println!("[debug] executing if statement");
                 let value = Evaluator::evaluate(ifs.expr.clone(), rc_locals.clone());
+                let mut values;
                 if value == Value::Bool(true) {
-                    return Self::execute_block(ifs.then.clone(), rc_locals.clone());
+                    values = Self::execute_block(ifs.then.clone(), rc_locals.clone());
                 }
                 else {
-                    return Self::execute_block(ifs.elses.clone(), rc_locals.clone());
+                    values = Self::execute_block(ifs.elses.clone(), rc_locals.clone());
                 }
+                (true, values.1)
+            }
+            StmtNode::While(whiles) => {
+                println!("[debug] executing while statement");
+                let mut value = Evaluator::evaluate(whiles.expr.clone(), rc_locals.clone());
+                let mut values;
+                while value == Value::Bool(true) {
+                    values = Self::execute_block(whiles.then.clone(), rc_locals.clone());
+                    value = Evaluator::evaluate(whiles.expr.clone(), rc_locals.clone());
+                }
+                (false, Value::Nil)
             }
             StmtNode::Let(lets) => {
                 println!("[debug] executing let statement");
@@ -132,10 +150,10 @@ impl Executor {
                 println!("[debug] executing assign statement");
                 let name = &assign.name;
                 let value = Evaluator::evaluate(assign.expr.clone(), rc_locals.clone());
-                if rc_locals.borrow_mut().lookup(name) == Value::Null {
+                if rc_locals.borrow_mut().lookup(name) != Value::Nil  {
                     rc_locals.borrow_mut().assign(name, value);
                 }
-                else if rc_locals.borrow_mut().lookup_global(name) == Value::Null {
+                else if rc_locals.borrow_mut().lookup_global(name) != Value::Nil {
                     rc_locals.borrow_mut().assign_global(name, value);
                 }
                 else {

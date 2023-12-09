@@ -1,20 +1,24 @@
-#![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
+#![allow(unused_assignments)]
+#![allow(dead_code)]
+#![allow(unused_mut)]
 
+use std::rc::Rc;
 use crate::lexer_mockup::Lexer;
 use crate::lexer::MyLexer;
 use crate::pratt_parsing::brad_pratt;
 use crate::token::Token;
+use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, IfNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
+use crate::value::Value;
 
 const INDENT : usize = 2;
 
 
-pub fn boolS() {
+pub fn boolS(argc: Vec<String>) -> ProgramNode {
     let test2 =
 "let global;
-global = 5;
 
-func factorial_recursion(n)
+func factorial_recursion(n, q, z)
 {
     if n < 2 {
         return 1;
@@ -37,7 +41,7 @@ func main(argc)
     let n;
     n = 5;
     print factorial_loop(n);
-    print factorial_recursion(n);
+    print factorial_recursion(n, false, 1);
 }
 ";
 
@@ -45,15 +49,19 @@ func main(argc)
     lexer = MyLexer::set_input(test2);
 
     let mut tokens = lexer.get_tokens();
-    println!("{:?}", tokens);
+    if argc.contains(&"t".to_string()) {
+        println!("{:?}", tokens);
+    }
+    let mut prog = ProgramNode::new();
+    if argc.contains(&"e".to_string()) {
+        let lexer = Lexer::new(tokens);
+        let mut parser = DescentParser::new(lexer);
 
-    let lexer = Lexer::new(tokens);
-    let mut parser = DescentParser::new(lexer);
-
-    parser.analyze();
+        prog = parser.analyze();
+    }
+    prog
 
 }
-
 
 struct DescentParser {
     lexer: Lexer,
@@ -70,23 +78,28 @@ impl DescentParser {  // simple recursive descend parser
         }
     }
 
-    pub fn analyze(&mut self) {
+    pub fn analyze(&mut self) -> ProgramNode {
         self.indent = 0;
+        let mut prog = ProgramNode::new();
         while !self.peek(Token::EOI) {
             if self.peek(Token::KW_FUNC) {
-                self.parse_func();
+                let mut x = self.parse_func();
+                prog.func_nodes.push(Rc::new(x));
+
             }
             else if self.peek(Token::KW_LET) {
-                self.parse_let();
+                let mut x = self.parse_let();
+                prog.let_nodes.push(Rc::new(x));
             }
-            else if self.peek(Token::id()) {
-                self.parse_assignment();
-            }
+            //else if self.peek(Token::id()) {
+            //    self.parse_assignment();
+            //}
         }
         self.expect(Token::EOI);
+        prog
     }
 
-    fn parse_func(&mut self) {
+    fn parse_func(&mut self) -> FuncNode {
         /*
             Func -> func id List ("->" id)* Body
             List -> '(' (Param(, Param)*)? ')'
@@ -96,68 +109,83 @@ impl DescentParser {  // simple recursive descend parser
 
         self.indent_print("parse_func()");
         self.indent_increment();
+        let mut str;
+        let mut parameters = vec![];
+        let mut block = BlockNode::new();
         {
             self.expect(Token::KW_FUNC);
+            str = format!("{:?}", self.curr());
+            str = str[4..str.len()-2].parse().unwrap();
             self.expect(Token::id());
-            self.parse_parameter_list();
-            if self.peek(Token::ARROW_R) {
-                self.expect(Token::ARROW_R);
-                self.type_check();
-            }
-            self.parse_brace_nest();
+            parameters = self.parse_parameter_list();
+            //if self.peek(Token::ARROW_R) {
+            //    self.expect(Token::ARROW_R);
+            //    self.type_check();
+            //}
+            block = self.parse_brace_nest();
         }
         self.indent_decrement();
+        FuncNode::new(str, parameters, block)
     }
 
-    fn parse_parameter_list(&mut self) {
+    fn parse_parameter_list(&mut self) -> Vec<Parameter> {
+        let mut parameters : Vec<Parameter> = vec![];
         self.indent_print("parse_parameter_list()");
         self.indent_increment();
         {
             self.expect(Token::PAREN_L);
             if self.accept(Token::PAREN_R) {
-                return;
+                return parameters;
             }
-            self.parse_parameter();
+            parameters.push(Parameter::new(self.parse_parameter()));
             while self.accept(Token::COMMA) {
-                self.parse_parameter();
+                parameters.push(Parameter::new(self.parse_parameter()));
             }
             self.expect(Token::PAREN_R);
         }
         self.indent_decrement();
+        parameters
     }
 
-    fn parse_parameter(&mut self) {
+    fn parse_parameter(&mut self) -> String {
         self.indent_print("parse_parameter()");
         self.indent_increment();
+        let mut str;
         {
+            str = format!("{:?}", self.curr());
+            str = str[4..str.len()-2].parse().unwrap();
             self.expect(Token::id());
-            self.expect(Token::COLON);
-            self.type_check();
+            //self.expect(Token::COLON);
+            //self.type_check();
         }
         self.indent_decrement();
+        str
     }
 
     fn type_check(&mut self) {
-        if self.peek(Token::TYPE_I32) {
-            self.expect(Token::TYPE_I32);
-        }
+        // if self.peek(Token::TYPE_I32) {
+        //     self.expect(Token::TYPE_I32);
+        // }
         // else if self.peek(Token::TYPE_F32) {
         //     self.expect(Token::TYPE_F32);
         // }
         // else if self.peek(Token::TYPE_CHAR) {
         //     self.expect(Token::TYPE_CHAR);
         // }
-        else if self.peek(Token::TYPE_BOOL) {
-            self.expect(Token::TYPE_BOOL);
-        }
-        else {
-            panic!("Did not expect '{:?}'!", self.curr());
-        }
+        // else if self.peek(Token::TYPE_BOOL) {
+        //     self.expect(Token::TYPE_BOOL);
+        // }
+        // else {
+        //     panic!("Did not expect '{:?}'!", self.curr());
+        // }
     }
 
-    fn lit_check(&mut self) {
+    fn lit_check(&mut self) -> ExprNode {
+        let mut expr = ExprNode::Val(Value::Nil);
         if self.peek(Token::LIT_I32(0)) {
-            self.parse_expression();
+            let mut token = self.parse_expression();
+            let mut tree = brad_pratt(token.clone());
+            expr = tree.evaluate_recursively();
         }
         // else if self.peek(Token::LIT_F32(0.0)) {
         //     self.expect(Token::lit_f32());
@@ -165,39 +193,44 @@ impl DescentParser {  // simple recursive descend parser
         // else if self.peek(Token::LIT_CHAR(' ')) {
         //     self.expect(Token::lit_char());
         // }
-        else if self.peek(Token::lit_string()) {
-            self.expect(Token::lit_string());
-        }
+        // else if self.peek(Token::lit_string()) {
+        //     self.expect(Token::lit_string());
+        // }
         else if self.peek(Token::lit_bool()) {
-            self.parse_expression();
+            let mut token = self.parse_expression();
+            let mut tree = brad_pratt(token.clone());
+            expr = tree.evaluate_recursively();
         }
         else {
             panic!("Did not expect '{:?}'!", self.curr());
         }
+        expr.clone()
     }
 
-    fn parse_next(&mut self) {
+    fn parse_next(&mut self, mut block: BlockNode) -> BlockNode {
         if self.peek(Token::KW_LET) {
-            self.parse_let();
+            block.statements.push(Rc::new(StmtNode::Let(self.parse_let())));
         }
         else if self.peek(Token::KW_IF) {
-            self.parse_if();
+            block.statements.push(Rc::new(self.parse_if()));
         }
         else if self.peek(Token::KW_RETURN) {
-            self.parse_return();
+            block.statements.push(Rc::new(self.parse_return()));
         }
         else if self.peek(Token::KW_WHILE) {
-            self.parse_while();
+            block.statements.push(Rc::new(self.parse_while()));
         }
         else if self.peek(Token::KW_PRINT) {
-            self.parse_print();
+            block.statements.push(Rc::new(self.parse_print()));
         }
         else if self.peek(Token::id()) {
-            self.parse_assignment();
+            block.statements.push(Rc::new(self.parse_assignment()));
         }
         else {
             panic!("Did not expect '{:?}'!", self.curr());
         }
+
+        block.clone()
     }
 
     fn parse_block_nest(&mut self) {
@@ -225,9 +258,10 @@ impl DescentParser {  // simple recursive descend parser
         self.indent_decrement();
     }
 
-    fn parse_brace_nest(&mut self) {
+    fn parse_brace_nest(&mut self) -> BlockNode {
         self.indent_print("parse_brace_nest()");
         self.indent_increment();
+        let mut block = BlockNode::new();
         {
             self.expect(Token::BRACE_L);
             if self.peek(Token::BRACE_L) {
@@ -236,11 +270,12 @@ impl DescentParser {  // simple recursive descend parser
 
             }
             while !self.peek(Token::BRACE_R) {
-                self.parse_next();
+                block = self.parse_next(block.clone());
             }
             self.expect(Token::BRACE_R);
         }
         self.indent_decrement();
+        block.clone()
     }
 
     fn parse_brace_list(&mut self) {
@@ -260,134 +295,162 @@ impl DescentParser {  // simple recursive descend parser
         self.indent_decrement();
     }
 
-    fn parse_let(&mut self) {
+    fn parse_let(&mut self) -> LetNode {
         /*
             Let -> Let id (: type)* ('=' (id|lit))* ';'
         */
         self.indent_print("parse_let()");
         self.indent_increment();
+        let mut str;
         {
             self.expect(Token::KW_LET);
+            str = format!("{:?}", self.curr());
+            str = str[4..str.len()-2].parse().unwrap();
             self.expect(Token::id());
             if self.peek(Token::SEMICOLON) {
                 self.expect(Token::SEMICOLON);
             }
-            else {
-                if self.accept(Token::COLON) {
-                    self.type_check();
-                    if self.peek(Token::SEMICOLON) {
-                        self.expect(Token::SEMICOLON);
-                    }
-                }
-
-                self.expect(Token::OP_ASSIGN);
-                //TODO: NICE EXPRESSION
-                if self.peek(Token::ID(String::new())) {
-                    self.expect(Token::id());
-                }
-                else {
-                    self.lit_check();
-                }
-                self.expect(Token::SEMICOLON);
-            }
+            // else {
+            //     if self.accept(Token::COLON) {
+            //         self.type_check();
+            //         if self.peek(Token::SEMICOLON) {
+            //             self.expect(Token::SEMICOLON);
+            //         }
+            //     }
+            //
+            //     self.expect(Token::OP_ASSIGN);
+            //
+            //     if self.peek(Token::ID(String::new())) {
+            //         self.expect(Token::id());
+            //     }
+            //     else {
+            //         self.lit_check();
+            //     }
+            //     self.expect(Token::SEMICOLON);
+            // }
         }
         self.indent_decrement();
+        LetNode::new(str)
     }
 
-    fn parse_if(&mut self) {
+    fn parse_if(&mut self) -> StmtNode {
         /*
             If -> if List Body (else Body)*
             List -> ('(' (expr)* ')')? | (expr)*
             Body -> {(Let)* (If)* (Return)*}
         */
-
+        let mut expr;
+        let mut thenblock = BlockNode::new();
+        let mut elseblock = BlockNode::new();
         self.indent_print("parse_if()");
         self.indent_increment();
         {
             self.expect(Token::KW_IF);
             if self.accept(Token::PAREN_L) {
                 if self.peek(Token::ID(String::new())) {
-                    self.parse_expression();
+                    let mut token = self.parse_expression();
+                    let mut tree = brad_pratt(token.clone());
+                    expr = tree.evaluate_recursively();
                 }
                 else {
-                    self.lit_check();
+                    expr = self.lit_check();
                 }
                 self.expect(Token::PAREN_R);
             }
             else {
-                //TODO: NICE EXPRESSION
                 if self.peek(Token::ID(String::new())) {
-                    self.parse_expression();
+                    let mut token = self.parse_expression();
+                    let mut tree = brad_pratt(token.clone());
+                    expr = tree.evaluate_recursively();
                 }
                 else {
-                    self.lit_check();
+                    expr = self.lit_check();
                 }
             }
 
-            self.parse_brace_nest();
+            thenblock = self.parse_brace_nest();
             if self.peek(Token::KW_ELSE) {
                 self.indent_print("parse_else()");
                 if self.accept(Token::KW_ELSE) {
-                    self.parse_brace_nest();
+                    elseblock = self.parse_brace_nest();
                 }
             }
         }
         self.indent_decrement();
+        StmtNode::If(IfNode::new(expr, thenblock, elseblock))
     }
 
-    fn parse_return(&mut self) {
+    fn parse_return(&mut self) -> StmtNode {
         /*
             Return -> return (lit|id)* ';'
         */
+
         self.indent_print("parse_return()");
         self.indent_increment();
+        let mut expr = ExprNode::Val(Value::Nil);
         {
             self.expect(Token::KW_RETURN);
             if !self.peek(Token::SEMICOLON) {
                 if self.peek(Token::ID(String::new())) {
-                    self.parse_expression();
+                    let mut token = self.parse_expression();
+                    let mut tree = brad_pratt(token.clone());
+                    expr = tree.evaluate_recursively();
                 }
                 else {
-                    self.lit_check();
+                    expr = self.lit_check();
                 }
             }
             self.expect(Token::SEMICOLON);
         }
         self.indent_decrement();
+        StmtNode::Return(ReturnNode::new(expr))
     }
 
-    fn parse_while(&mut self) {
+    fn parse_while(&mut self) -> StmtNode {
         /*
             While -> while expression+ { } ';'
         */
+
         self.indent_print("parse_while()");
         self.indent_increment();
+        let mut expr = ExprNode::Val(Value::Nil);
+        let mut thenblock = BlockNode::new();
         {
             self.expect(Token::KW_WHILE);
             if self.accept(Token::PAREN_L) {
-                self.parse_expression();
+
+                let mut token = self.parse_expression();
+                let mut tree = brad_pratt(token.clone());
+                expr = tree.evaluate_recursively();
                 self.expect(Token::PAREN_R);
             }
             else {
-                self.parse_expression();
+                let mut token = self.parse_expression();
+                let mut tree = brad_pratt(token.clone());
+                expr = tree.evaluate_recursively();
             }
-            self.parse_brace_nest();
+            thenblock = self.parse_brace_nest();
         }
         self.indent_decrement();
+        StmtNode::While(WhileNode::new(expr, thenblock))
     }
 
-    fn parse_print(&mut self) {
+    fn parse_print(&mut self) -> StmtNode {
         /*
             Print -> print (returning func-call | int | bool)+
          */
         self.indent_print("parse_print()");
         self.indent_increment();
+        let mut expr = ExprNode::Val(Value::Nil);
         {
             self.expect(Token::KW_PRINT);
-            self.parse_expression();
+            let mut token = self.parse_expression();
+            let mut tree = brad_pratt(token.clone());
+            expr = tree.evaluate_recursively();
             self.expect(Token::SEMICOLON);
         }
         self.indent_decrement();
+        StmtNode::Print(PrintNode::new(expr))
     }
 
     fn parse_expression(&mut self) -> Vec<Token> {
@@ -419,25 +482,29 @@ impl DescentParser {  // simple recursive descend parser
                 if self.peek(Token::PAREN_L) {
                     self.expect(Token::PAREN_L);
 
+                    let mut tokenVecs = vec![];
                     let mut tokens = vec![];
-
                     //TODO: BEGIN - Expression =
                     if self.peek(Token::lit_i32()) ||
                         self.peek(Token::id()) ||
                         self.peek(Token::lit_bool()) {
 
-                        tokens = self.parse_expression();
+                        tokenVecs.push(self.parse_expression());
                     }
-
-                    last = Token::CALLS(tokens.clone());
-                    expression.push(last.clone());
 
                     while self.accept(Token::COMMA) {
-                        tokens = self.parse_expression();
-                        last = Token::CALLS(tokens.clone());
-                        expression.push(last.clone());
+                        tokenVecs.push(self.parse_expression());
                     }
 
+                    for tokenVec in tokenVecs {
+                        for token in tokenVec {
+                            tokens.push(token);
+                        }
+                    }
+                    let mut str = format!("{:?}", last);
+                    str = str[4..str.len()-2].parse().unwrap();
+                    last = Token::CALLS(str,tokens.clone());
+                    expression.push(last.clone());
                     //TODO: END
                     self.expect(Token::PAREN_R);
 
@@ -445,23 +512,29 @@ impl DescentParser {  // simple recursive descend parser
                     expression.push(last.clone());
                 }
             }
-            brad_pratt(expression.clone());
         }
         println!("{:<indent$}{:?}", "", expression.clone(), indent=self.indent);
         self.indent_decrement();
         return expression.clone();
     }
 
-    fn parse_assignment(&mut self) {
+    fn parse_assignment(&mut self) -> StmtNode {
         self.indent_print("parse_assignment()");
         self.indent_increment();
+        let mut str;
+        let mut expr = ExprNode::Val(Value::Nil);
         {
+            str = format!("{:?}", self.curr());
+            str = str[4..str.len()-2].parse().unwrap();
             self.expect(Token::id());
             self.expect(Token::OP_ASSIGN);
-            self.parse_expression();
+            let mut token = self.parse_expression();
+            let mut tree = brad_pratt(token.clone());
+            expr = tree.evaluate_recursively();
             self.expect(Token::SEMICOLON);
         }
         self.indent_decrement();
+        StmtNode::Assign(AssignNode::new(str, expr))
     }
 }
 

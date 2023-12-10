@@ -137,7 +137,6 @@ impl ParseTree {
             }
         }
 
-        //TODO: Note
         if !self.children.is_empty() {
             if self.children.len() == 1 {
                 if self.token.eq(&Token::OP_NOT) {

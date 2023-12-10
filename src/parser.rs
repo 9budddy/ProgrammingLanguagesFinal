@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 #![allow(unused_mut)]
 
+use std::env;
 use std::rc::Rc;
 use crate::lexer_mockup::Lexer;
 use crate::lexer::MyLexer;
@@ -14,46 +15,18 @@ use crate::value::Value;
 const INDENT : usize = 2;
 
 
-pub fn boolS(argc: Vec<String>) -> ProgramNode {
-    let test2 =
-"let global;
-
-func factorial_recursion(n, q, z)
-{
-    if n < 2 {
-        return 1;
-    } else {
-        return n;
-    }
-}
-func factorial_loop(n)
-{
-    let p;
-    p = n;
-    while n > 0 {
-        n = n - 1;
-        p = p * n;
-    }
-    return p;
-}
-func main(argc)
-{
-    let n;
-    n = 5;
-    print factorial_loop(n);
-    print factorial_recursion(n, false, 1);
-}
-";
+pub fn boolS(_contents: String) -> ProgramNode {
+    let argc: Vec<String> = env::args().collect();
 
     let mut lexer;
-    lexer = MyLexer::set_input(test2);
+    lexer = MyLexer::set_input(_contents);
 
     let mut tokens = lexer.get_tokens();
-    if argc.contains(&"t".to_string()) {
+    if argc.get(1).unwrap().chars().find(|chars| { chars == &'t' }).is_some() {
         println!("{:?}", tokens);
     }
     let mut prog = ProgramNode::new();
-    if argc.contains(&"e".to_string()) {
+    if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' || chars == &'e' || chars == &'p'}).is_some() {
         let lexer = Lexer::new(tokens);
         let mut parser = DescentParser::new(lexer);
 
@@ -106,8 +79,11 @@ impl DescentParser {  // simple recursive descend parser
             Param -> id ':' id
             Body -> {(Let)* (If)* (Return)*}
         */
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_func()");
+        }
 
-        self.indent_print("parse_func()");
         self.indent_increment();
         let mut str;
         let mut parameters = vec![];
@@ -130,7 +106,11 @@ impl DescentParser {  // simple recursive descend parser
 
     fn parse_parameter_list(&mut self) -> Vec<Parameter> {
         let mut parameters : Vec<Parameter> = vec![];
-        self.indent_print("parse_parameter_list()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_parameter_list()");
+        }
+
         self.indent_increment();
         {
             self.expect(Token::PAREN_L);
@@ -148,7 +128,11 @@ impl DescentParser {  // simple recursive descend parser
     }
 
     fn parse_parameter(&mut self) -> String {
-        self.indent_print("parse_parameter()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_parameter()");
+        }
+
         self.indent_increment();
         let mut str;
         {
@@ -234,7 +218,11 @@ impl DescentParser {  // simple recursive descend parser
     }
 
     fn parse_block_nest(&mut self) {
-        self.indent_print("parse_block_nest()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_block_nest()");
+        }
+
         self.indent_increment();
         {
             self.expect(Token::BRACKET_L);
@@ -247,7 +235,11 @@ impl DescentParser {  // simple recursive descend parser
     }
 
     fn parse_block_list(&mut self) {
-        self.indent_print("parse_block_list()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_block_list()");
+        }
+
         self.indent_increment();
         {
             self.parse_block_nest();
@@ -259,7 +251,11 @@ impl DescentParser {  // simple recursive descend parser
     }
 
     fn parse_brace_nest(&mut self) -> BlockNode {
-        self.indent_print("parse_brace_nest()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_brace_nest()");
+        }
+
         self.indent_increment();
         let mut block = BlockNode::new();
         {
@@ -279,7 +275,11 @@ impl DescentParser {  // simple recursive descend parser
     }
 
     fn parse_brace_list(&mut self) {
-        self.indent_print("parse_brace_list()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_brace_list()");
+        }
+
         self.indent_increment();
 
         {
@@ -299,7 +299,11 @@ impl DescentParser {  // simple recursive descend parser
         /*
             Let -> Let id (: type)* ('=' (id|lit))* ';'
         */
-        self.indent_print("parse_let()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_let()");
+        }
+
         self.indent_increment();
         let mut str;
         {
@@ -342,7 +346,11 @@ impl DescentParser {  // simple recursive descend parser
         let mut expr;
         let mut thenblock = BlockNode::new();
         let mut elseblock = BlockNode::new();
-        self.indent_print("parse_if()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_if()");
+        }
+
         self.indent_increment();
         {
             self.expect(Token::KW_IF);
@@ -370,7 +378,11 @@ impl DescentParser {  // simple recursive descend parser
 
             thenblock = self.parse_brace_nest();
             if self.peek(Token::KW_ELSE) {
-                self.indent_print("parse_else()");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+                    self.indent_print("parse_else()");
+                }
+
                 if self.accept(Token::KW_ELSE) {
                     elseblock = self.parse_brace_nest();
                 }
@@ -385,7 +397,11 @@ impl DescentParser {  // simple recursive descend parser
             Return -> return (lit|id)* ';'
         */
 
-        self.indent_print("parse_return()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_return()");
+        }
+
         self.indent_increment();
         let mut expr = ExprNode::Val(Value::Nil);
         {
@@ -410,8 +426,11 @@ impl DescentParser {  // simple recursive descend parser
         /*
             While -> while expression+ { } ';'
         */
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_while()");
+        }
 
-        self.indent_print("parse_while()");
         self.indent_increment();
         let mut expr = ExprNode::Val(Value::Nil);
         let mut thenblock = BlockNode::new();
@@ -439,7 +458,11 @@ impl DescentParser {  // simple recursive descend parser
         /*
             Print -> print (returning func-call | int | bool)+
          */
-        self.indent_print("parse_print()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_print()");
+        }
+
         self.indent_increment();
         let mut expr = ExprNode::Val(Value::Nil);
         {
@@ -457,7 +480,11 @@ impl DescentParser {  // simple recursive descend parser
         /*
             Expressions ->
          */
-        self.indent_print("parse_expression()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_expression()");
+        }
+
         self.indent_increment();
 
         let mut expression = vec![];
@@ -484,7 +511,7 @@ impl DescentParser {  // simple recursive descend parser
 
                     let mut tokenVecs = vec![];
                     let mut tokens = vec![];
-                    //TODO: BEGIN - Expression =
+                    //BEGIN - Expression =
                     if self.peek(Token::lit_i32()) ||
                         self.peek(Token::id()) ||
                         self.peek(Token::lit_bool()) {
@@ -505,7 +532,7 @@ impl DescentParser {  // simple recursive descend parser
                     str = str[4..str.len()-2].parse().unwrap();
                     last = Token::CALLS(str,tokens.clone());
                     expression.push(last.clone());
-                    //TODO: END
+                    //END
                     self.expect(Token::PAREN_R);
 
                 } else {
@@ -513,13 +540,21 @@ impl DescentParser {  // simple recursive descend parser
                 }
             }
         }
-        println!("{:<indent$}{:?}", "", expression.clone(), indent=self.indent);
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            println!("{:<indent$}{:?}", "", expression.clone(), indent=self.indent);
+        }
+
         self.indent_decrement();
         return expression.clone();
     }
 
     fn parse_assignment(&mut self) -> StmtNode {
-        self.indent_print("parse_assignment()");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+            self.indent_print("parse_assignment()");
+        }
+
         self.indent_increment();
         let mut str;
         let mut expr = ExprNode::Val(Value::Nil);
@@ -552,7 +587,11 @@ impl DescentParser { // utility functions for lexer
     fn expect(&mut self, symbol: Token) {
         if self.curr() == symbol {
             self.advance();
-            println!("{:<indent$}expect({symbol:?})", "", indent = self.indent);
+            let argc: Vec<String> = env::args().collect();
+            if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+                println!("{:<indent$}expect({symbol:?})", "", indent = self.indent);
+            }
+
         } else {
             panic!("Did not expect '{symbol:?}'!");
         }
@@ -560,7 +599,11 @@ impl DescentParser { // utility functions for lexer
 
     fn accept(&mut self, symbol: Token) -> bool {
         if self.curr() == symbol {
-            println!("{:<indent$}accept({symbol:?})", "", indent = self.indent);
+            let argc: Vec<String> = env::args().collect();
+            if argc.get(1).unwrap().chars().find(|chars| { chars == &'p' }).is_some() {
+                println!("{:<indent$}accept({symbol:?})", "", indent = self.indent);
+            }
+
             self.advance();
             true
         } else {

@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 use std::cell::RefCell;
+use std::env;
 use std::ops::Deref;
 use std::rc::Rc;
 use crate::executor::Executor;
@@ -74,7 +75,11 @@ impl Evaluator {
                 Self::div(value_a, value_b)
             }
             ExprNode::Call(name, rc_exprs) => {
-                println!("[debug] evaluating call '{name}'");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] evaluating call '{name}'");
+                }
+
                 match rc_frame.borrow().lookup_global(name) {
                     Value::Func(rc_func, argc) => {
                         assert_eq!(argc,rc_exprs.len());

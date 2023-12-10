@@ -219,7 +219,8 @@ impl Token {
 
     fn binding_powers(token : &Token) -> (i32, i32) {
         match token {
-            Token::OP_NOT => (16,17),
+            Token::OP_NOT => (17,18),
+            Token::CALLS(_,_) => (16,16),
             Token::LIT_BOOL(_) => (15,15),
             Token::ID(_) => (15,15),
             Token::LIT_I32(_) => (15,15),
@@ -233,7 +234,6 @@ impl Token {
             Token::OP_AND_BIT => (5,6),
             Token::OP_OR_BIT => (5,6),
             Token::OP_ASSIGN => (4,3),
-            Token::CALLS(_,_) => (1,1),
             Token::EOI => (0,0),
             _ => {
                 panic!("Missing binding powers for token {:?}", token);

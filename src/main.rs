@@ -2,12 +2,9 @@
 #![allow(unused_assignments)]
 #![allow(dead_code)]
 
-use std::env;
-use std::rc::Rc;
-use crate::machine::Machine;
+use std::fs;
 use crate::somethinggood::runNeg1;
-use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, IfNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
-use crate::value::Value;
+
 
 mod tree;
 mod executor;
@@ -26,58 +23,7 @@ mod pratt_parsing;
 mod parse_tree;
 
 
-/*
-
-The test AST corresponds to following code:
-
-let count;
-let help;
-
-func add(a,b) [
-    return a + b;
-]
-
-func main(argc) [
-    let sum;
-    sum = 3+(5+7);
-    print sum;
-    sum = add(sum, 1);
-    print sum;
-]
- */
-
-/*
-let global;
-
-func factorial_recursion(n, q, z)
-{
-    if n < 2 {
-        return 1;
-    } else {
-        return n;
-    }
-}
-func factorial_loop(n)
-{
-    let p;
-    p = n;
-    while n > 0 {
-        n = n - 1;
-        p = p * n;
-    }
-    return p;
-}
-func main(argc)
-{
-    let n;
-    n = 5;
-    print factorial_loop(n);
-    print factorial_recursion(n, false, 1);
-}
-
- */
-
-fn grow_ast_program0() -> Rc<ProgramNode> {
+/*fn grow_ast_program0() -> Rc<ProgramNode> {
 
     let mut program = ProgramNode::new();
 
@@ -220,7 +166,7 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
 
 
 
-    /*let mut program = ProgramNode::new();
+    let mut program = ProgramNode::new();
 
     // global variables
     let let_count = LetNode::new( "count".to_string(), Value::Nil);
@@ -286,23 +232,48 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
         block_main);
 
     program.func_nodes.push(Rc::new(func_main));
-*/
+
 
     Rc::new(program)
-}
+}*/
 
 
-fn run0() {
+/*fn run0() {
     let rc_program = grow_ast_program0();
 
     let runtime = Machine::new(rc_program);
     runtime.run();
+}*/
+
+use clap::Parser;
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    pattern: String,
+    path: std::path::PathBuf,
 }
 
-
 fn main() {
-    let argc: Vec<String> = env::args().collect();
 
-    runNeg1(argc.clone());
-    //run0();
+    let pattern = std::env::args().nth(1).expect("no pattern given");
+    let path = std::env::args().nth(2).expect("no path given");
+
+
+    let args = Args {
+        pattern,
+        path: std::path::PathBuf::from(path),
+    };
+
+    println!(
+"command(s):
+    t (tokenize)
+    p (parse)
+    e (execute)
+    d (debug)
+");
+
+    let _contents = fs::read_to_string(args.path).expect("Should have been able to read the file");
+
+    runNeg1(_contents);
 }

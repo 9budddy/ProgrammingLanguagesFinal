@@ -1,0 +1,29 @@
+let global;
+
+func factorial_recursion(n, q, z)
+{
+    if n < 2 {
+        return 1;
+    } else {
+        return n;
+    }
+}
+
+func factorial_loop(n)
+{
+    let p;
+    p = n;
+    while n > 0 {
+        n = n - 1;
+        p = p * n;
+    }
+    return p;
+}
+
+func main(argc)
+{
+    let n;
+    n = 5;
+    print factorial_loop(n);
+    print factorial_recursion(n, false, 1);
+}

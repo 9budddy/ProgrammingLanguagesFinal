@@ -1,12 +1,15 @@
 [package]
-name = "PL_F23_Executing"
+name = "A_J-Fusion"
 version = "0.1.0"
 edition = "2021"
+authors = ["Jarett Brown", "Austin McCready"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 exitcode = "1.1.2"
+clap = { version = "4.4.6", features = ["derive"]}
 
 [profile.release]
 opt-level = 'z'     # Optimize for size

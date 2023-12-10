@@ -5,6 +5,7 @@
 #![allow(unused_mut)]
 
 use std::cell::RefCell;
+use std::env;
 use std::ops::Deref;
 use std::rc::Rc;
 use crate::evaluator::Evaluator;
@@ -23,12 +24,19 @@ impl Executor {
     }
 
     pub fn execute(&self) {
-        println!("[info] Execute.");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+            println!("[info] Execute.");
+        }
         self.execute_program();
     }
 
     fn execute_program(&self) {
-        println!("[info] Execute Program.");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+            println!("[info] Execute Program.");
+        }
+
 
         // get program node symbol table
         let rc_symbols = self.program.symbols.clone();
@@ -61,7 +69,11 @@ impl Executor {
     ) -> Value
     {
         let name = &rc_func.name;
-        println!("[debug] calling function '{name}'.");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+            println!("[debug] calling function '{name}'.");
+        }
+
 
         // create local stack frame
         let mut locals = Frame::new(Some(frame));
@@ -95,8 +107,12 @@ impl Executor {
         // initialize local frame
         rc_locals.borrow_mut().init_symbols(&symbols);
 
-        println!("[debug] Block Symbols:");
-        rc_locals.borrow_mut().print();
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+            println!("[debug] Block Symbols:");
+            rc_locals.borrow_mut().print();
+        }
+
 
         // execute statements
         for statement in &rc_block.statements {
@@ -119,7 +135,11 @@ impl Executor {
     {
         match rc_statement.deref() {
             StmtNode::If(ifs) => {
-                println!("[debug] executing if statement");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] executing if statement");
+                }
+
                 let value = Evaluator::evaluate(ifs.expr.clone(), rc_locals.clone());
                 let mut values;
                 if value == Value::Bool(true) {
@@ -131,7 +151,11 @@ impl Executor {
                 (true, values.1)
             }
             StmtNode::While(whiles) => {
-                println!("[debug] executing while statement");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] executing while statement");
+                }
+
                 let mut value = Evaluator::evaluate(whiles.expr.clone(), rc_locals.clone());
                 let mut values;
                 while value == Value::Bool(true) {
@@ -141,20 +165,36 @@ impl Executor {
                 (false, Value::Nil)
             }
             StmtNode::Let(lets) => {
-                println!("[debug] executing let statement");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] executing let statement");
+                }
+
                 let name = &lets.name;
                 rc_locals.borrow_mut().assign(name, Value::Null);
                 (false, Value::Nil)
             }
             StmtNode::Assign(assign) => {
-                println!("[debug] executing assign statement");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] executing assign statement");
+                }
+
                 let name = &assign.name;
                 let value = Evaluator::evaluate(assign.expr.clone(), rc_locals.clone());
                 if rc_locals.borrow_mut().lookup(name) != Value::Nil  {
-                    rc_locals.borrow_mut().assign(name, value);
+                    rc_locals.borrow_mut().assign(name, value.clone());
+                    if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                        println!("[debug] assigning value {:?} to name {}", value, name);
+                    }
+
                 }
                 else if rc_locals.borrow_mut().lookup_global(name) != Value::Nil {
-                    rc_locals.borrow_mut().assign_global(name, value);
+                    rc_locals.borrow_mut().assign_global(name, value.clone());
+                    if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                        println!("[debug] assigning global_value {:?} to global_name {}", value, name);
+                    }
+
                 }
                 else {
                     panic!("Missing let declaration for variable {:?}", name);
@@ -163,12 +203,23 @@ impl Executor {
                 (false, Value::Nil)
             }
             StmtNode::Return(ret) => {
-                println!("[debug] executing return statement");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] executing return statement");
+                }
+
                 let value = Evaluator::evaluate(ret.expr.clone(), rc_locals.clone());
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] returning value {:?}", value);
+                }
                 (true, value)
             }
             StmtNode::Print(print) => {
-                println!("[debug] executing print statement");
+                let argc: Vec<String> = env::args().collect();
+                if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+                    println!("[debug] executing print statement");
+                }
+
                 let value = Evaluator::evaluate(print.expr.clone(), rc_locals.clone());
                 value.print();
                 (false, Value::Nil)

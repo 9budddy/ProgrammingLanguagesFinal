@@ -18,7 +18,7 @@ pub struct MyLexer {
 }
 
 impl MyLexer {
-    pub fn set_input(string: &str) -> MyLexer {
+    pub fn set_input(string: String) -> MyLexer {
         MyLexer {
             input_string: string.parse().unwrap(),
             input_position: 0,

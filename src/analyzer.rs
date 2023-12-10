@@ -2,6 +2,7 @@
 #![allow(unused_assignments)]
 #![allow(dead_code)]
 
+use std::env;
 use std::rc::Rc;
 use crate::symbols::{Symbol};
 use crate::tree::{ProgramNode};
@@ -19,7 +20,11 @@ impl Analyzer {
     }
 
     pub fn analyze(&self) {
-        println!("[info] Analyze.");
+        let argc: Vec<String> = env::args().collect();
+        if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
+            println!("[info] Analyze.");
+        }
+
         self.collect_symbols_program();
         self.reference_symbols_program();
     }

@@ -5,7 +5,8 @@ func factorial_recursion(n, q, z)
     if n < 2 {
         return 1;
     } else {
-        return n;
+        n = n-1;
+        return n * factorial_recursion(n, false, 1);
     }
 }
 

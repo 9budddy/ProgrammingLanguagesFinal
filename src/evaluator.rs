@@ -17,7 +17,7 @@ pub struct Evaluator {
 
 impl Evaluator {
 
-    pub fn evaluate(expr: Rc<ExprNode>, rc_frame: Rc<RefCell<Frame>>) -> Value {
+    pub fn evaluate(expr: Rc<ExprNode>, frame: Rc<RefCell<Frame>>, rc_frame: Rc<RefCell<Frame>>) -> Value {
         match expr.deref() {
             ExprNode::Var(name) => {
                 rc_frame.borrow().lookup(name)
@@ -26,52 +26,52 @@ impl Evaluator {
                 value.clone()
             }
             ExprNode::Not(expr) =>{
-                let value_a = Self::evaluate(expr.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr.clone(), frame.clone(), rc_frame.clone());
                 Self::not(value_a)
             }
             ExprNode::EQUAL(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(), frame.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), frame.clone(),rc_frame.clone());
                 Self::equal(value_a, value_b)
             }
             ExprNode::AND_BIT(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), frame.clone(), rc_frame.clone());
                 Self::or_bit(value_a, value_b)
             }
             ExprNode::OR_BIT(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(),frame.clone(),  rc_frame.clone());
                 Self::or_bit(value_a, value_b)
             }
             ExprNode::GT(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), frame.clone(), rc_frame.clone());
                 Self::gt(value_a, value_b)
             }
             ExprNode::LT(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(),frame.clone(),  rc_frame.clone());
                 Self::lt(value_a, value_b)
             }
             ExprNode::Add(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(),frame.clone(),  rc_frame.clone());
                 Self::add(value_a, value_b)
             }
             ExprNode::Sub(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(),frame.clone(),  rc_frame.clone());
                 Self::sub(value_a, value_b)
             }
             ExprNode::Mul(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(),frame.clone(),  rc_frame.clone());
                 Self::mul(value_a, value_b)
             }
             ExprNode::Div(expr_a, expr_b) => {
-                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
-                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                let value_a = Self::evaluate(expr_a.clone(),frame.clone(),  rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(),frame.clone(),  rc_frame.clone());
                 Self::div(value_a, value_b)
             }
             ExprNode::Call(name, rc_exprs) => {
@@ -85,14 +85,31 @@ impl Evaluator {
                         assert_eq!(argc,rc_exprs.len());
                         let mut arguments = vec![];
                         for rc_expr in rc_exprs {
-                            let arg = Self::evaluate(rc_expr.clone(), rc_frame.clone());
+                            let arg = Self::evaluate(rc_expr.clone(),frame.clone(),  rc_frame.clone());
                             arguments.push(arg);
                         }
-                        Executor::execute_function(rc_func, rc_frame.clone(), arguments)
+
+                        Executor::execute_function(rc_func, frame.clone(), rc_frame.clone(), arguments)
                     }
                     _ => {
-                        println!("[warn] function '{name}' not found");
-                        Value::Nil
+                        let frames = frame.clone();
+                        match frame.borrow().lookup_global(name) {
+                            Value::Func(rc_func, argc) => {
+                                assert_eq!(argc,rc_exprs.len());
+                                let mut arguments = vec![];
+                                for rc_expr in rc_exprs {
+                                    let arg = Self::evaluate(rc_expr.clone(),frames.clone(),  rc_frame.clone());
+                                    arguments.push(arg);
+                                }
+
+                                Executor::execute_function(rc_func,  frames,rc_frame.clone(), arguments)
+                            }
+                            _ => {
+
+                                println!("[warn] function '{name}' not found");
+                                Value::Nil
+                            }
+                        }
                     }
                 }
             }

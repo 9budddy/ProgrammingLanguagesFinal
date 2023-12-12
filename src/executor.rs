@@ -59,12 +59,14 @@ impl Executor {
 
         // execute main function
         let arguments = vec![Value::I32(1)];
-        Self::execute_function(rc_main, rc_global, arguments);
+        let rc_locals = Rc::new(RefCell::new(Frame::new(Some(rc_global.clone()))));
+        Self::execute_function(rc_main, rc_global, rc_locals, arguments);
     }
 
     pub fn execute_function(
         rc_func: Rc<FuncNode>,
         frame: Rc<RefCell<Frame>>,
+        rc_local: Rc<RefCell<Frame>>,
         arguments: Vec<Value>
     ) -> Value
     {
@@ -76,7 +78,7 @@ impl Executor {
 
 
         // create local stack frame
-        let mut locals = Frame::new(Some(frame));
+        let mut locals = Frame::new(Some(frame.clone()));
 
         // initialize parameters
         let name = &rc_func.name;
@@ -91,21 +93,22 @@ impl Executor {
         // execute function block
         let rc_block = rc_func.block_node.clone();
         let rc_locals = Rc::new(RefCell::new(locals));
-        let return_value = Self::execute_block(rc_block, rc_locals);
+        let return_value = Self::execute_block(rc_block, frame, rc_locals);
 
         return_value.1
     }
 
     fn execute_block(
         rc_block: Rc<BlockNode>,
+        frame: Rc<RefCell<Frame>>,
         rc_locals: Rc<RefCell<Frame>>,
     ) -> (bool, Value) {
         // get block node symbol table
         let rc_symbols = rc_block.symbols.clone();
-        let symbols = rc_symbols.borrow_mut();
+        let symbols = rc_symbols.try_borrow_mut();
 
         // initialize local frame
-        rc_locals.borrow_mut().init_symbols(&symbols);
+        rc_locals.borrow_mut().init_symbols(&symbols.unwrap());
 
         let argc: Vec<String> = env::args().collect();
         if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
@@ -118,6 +121,7 @@ impl Executor {
         for statement in &rc_block.statements {
             let (done, value) = Self::execute_statement(
                 statement.clone(),
+                frame.clone(),
                 rc_locals.clone(),
             );
             if done {
@@ -130,6 +134,7 @@ impl Executor {
 
     fn execute_statement(
         rc_statement: Rc<StmtNode>,
+        frame: Rc<RefCell<Frame>>,
         rc_locals: Rc<RefCell<Frame>>,
     ) -> (bool, Value)
     {
@@ -140,13 +145,13 @@ impl Executor {
                     println!("[debug] executing if statement");
                 }
 
-                let value = Evaluator::evaluate(ifs.expr.clone(), rc_locals.clone());
+                let value = Evaluator::evaluate(ifs.expr.clone(), frame.clone(), rc_locals.clone());
                 let mut values;
                 if value == Value::Bool(true) {
-                    values = Self::execute_block(ifs.then.clone(), rc_locals.clone());
+                    values = Self::execute_block(ifs.then.clone(), frame.clone(), rc_locals.clone());
                 }
                 else {
-                    values = Self::execute_block(ifs.elses.clone(), rc_locals.clone());
+                    values = Self::execute_block(ifs.elses.clone(), frame.clone(), rc_locals.clone());
                 }
                 (true, values.1)
             }
@@ -156,11 +161,11 @@ impl Executor {
                     println!("[debug] executing while statement");
                 }
 
-                let mut value = Evaluator::evaluate(whiles.expr.clone(), rc_locals.clone());
+                let mut value = Evaluator::evaluate(whiles.expr.clone(), frame.clone(), rc_locals.clone());
                 let mut values;
                 while value == Value::Bool(true) {
-                    values = Self::execute_block(whiles.then.clone(), rc_locals.clone());
-                    value = Evaluator::evaluate(whiles.expr.clone(), rc_locals.clone());
+                    values = Self::execute_block(whiles.then.clone(), frame.clone(), rc_locals.clone());
+                    value = Evaluator::evaluate(whiles.expr.clone(), frame.clone(), rc_locals.clone());
                 }
                 (false, Value::Nil)
             }
@@ -181,7 +186,7 @@ impl Executor {
                 }
 
                 let name = &assign.name;
-                let value = Evaluator::evaluate(assign.expr.clone(), rc_locals.clone());
+                let value = Evaluator::evaluate(assign.expr.clone(), frame.clone(), rc_locals.clone());
                 if rc_locals.borrow_mut().lookup(name) != Value::Nil  {
                     rc_locals.borrow_mut().assign(name, value.clone());
                     if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
@@ -208,7 +213,7 @@ impl Executor {
                     println!("[debug] executing return statement");
                 }
 
-                let value = Evaluator::evaluate(ret.expr.clone(), rc_locals.clone());
+                let value = Evaluator::evaluate(ret.expr.clone(), frame.clone(), rc_locals.clone());
                 if argc.get(1).unwrap().chars().find(|chars| { chars == &'d' }).is_some() {
                     println!("[debug] returning value {:?}", value);
                 }
@@ -220,7 +225,7 @@ impl Executor {
                     println!("[debug] executing print statement");
                 }
 
-                let value = Evaluator::evaluate(print.expr.clone(), rc_locals.clone());
+                let value = Evaluator::evaluate(print.expr.clone(), frame.clone(), rc_locals.clone());
                 value.print();
                 (false, Value::Nil)
             }

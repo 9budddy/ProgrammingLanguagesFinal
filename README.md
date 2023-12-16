@@ -1,5 +1,6 @@
 University Programming Languages Final Project
 
+----
 Creation of a Small Programming Language in Rust to work with:
 - Finite State Machines (FSM) for a Lexer;
 - Recursive Decent Parser for a Parser;

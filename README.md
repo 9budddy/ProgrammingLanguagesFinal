@@ -9,10 +9,10 @@ Creation of a Small Programming Language in Rust to work with:
 - Command Lina Interface (CLI)
 
 CLI Commands: (t tokenize, p parse, d debug, e execute)
-  cargo run -- t <Program.txt>
-  cargo run -- p <Program.txt>
-  cargo run -- e <Program.txt>
-  cargo run -- d <Program.txt>
+  * cargo run -- t <Program.txt>
+  * cargo run -- p <Program.txt>
+  * cargo run -- e <Program.txt>
+  * cargo run -- d <Program.txt>
 
 +Any Combination
-  cargo run -- dept <Program.txt>
+  * cargo run -- dept <Program.txt>

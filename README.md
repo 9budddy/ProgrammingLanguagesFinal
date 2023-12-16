@@ -8,6 +8,7 @@ Creation of a Small Programming Language in Rust to work with:
 - Grammar Evaluations;
 - Command Lina Interface (CLI)
 
+----
 CLI Commands: (t tokenize, p parse, d debug, e execute)
   * cargo run -- t <Program.txt>
   * cargo run -- p <Program.txt>
